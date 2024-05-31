@@ -13,12 +13,17 @@ type PubsubHandler struct {
 }
 
 func (p PubsubHandler) CallBack(ctx context.Context, msg *pubsub.Message) {
-	completed, err := p.usecase.Subscriber(ctx)
+	parsedMsg, err := ParseMassege(msg.Data)
+	if err != nil {
+		slog.Error("failed to parse message", slog.Any("error", err))
+		return
+	}
+	completed, err := p.usecase.Subscriber(ctx, parsedMsg.Value)
 	if err != nil {
 		slog.Error("failed", slog.Any("error", err))
 	}
 	ackResult := p.ackResult(completed, msg)
-	p.logging(ctx, ackResult)
+	p.loggingAckResult(ctx, ackResult)
 }
 
 func (p PubsubHandler) ackResult(completed bool, msg *pubsub.Message) *pubsub.AckResult {
@@ -28,7 +33,7 @@ func (p PubsubHandler) ackResult(completed bool, msg *pubsub.Message) *pubsub.Ac
 	return msg.NackWithResult()
 }
 
-func (p PubsubHandler) logging(ctx context.Context, ackResult *pubsub.AckResult) error {
+func (p PubsubHandler) loggingAckResult(ctx context.Context, ackResult *pubsub.AckResult) error {
 	status, err := ackResult.Get(ctx)
 	if err != nil {
 		return err
