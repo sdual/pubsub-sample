@@ -12,6 +12,6 @@ func NewMsgSubscribe() MsgSubscribe {
 }
 
 func (ms MsgSubscribe) Subscribe(ctx context.Context, msg string) error {
-	msgChan := make(chan string)
+	_ = make(chan string)
 	return nil
 }
